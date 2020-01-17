@@ -5,7 +5,7 @@ import HomePage from './pages/homepage/homepage.component';
 import ShopPage from './pages/shop/shop.component';
 import Header from './components/header/header.component';
 import SignInAndSignUpPage from './pages/sign-in-and-sign-up/sign-in-and-sign-up.component';
-import { auth } from './firebase/firebase.utils';
+import { auth, createUserProfileDocument } from './firebase/firebase.utils';
 
 class App extends React.Component {
   constructor(props) {
@@ -18,11 +18,26 @@ class App extends React.Component {
   unsubscribeFromAuth = null;
 
   componentDidMount() {
-    this.unsubscribeFromAuth = auth.onAuthStateChanged(user => {
-      // 'onAuthStateChanged' is persisted
-      this.setState({ currentUser: user });
-      console.log(user);
-    }); // the auth observer is only triggered on sign-in or sign-out
+    // the auth observer is only triggered on sign-in or sign-out
+    this.unsubscribeFromAuth = auth.onAuthStateChanged(async userAuth => {
+      if (userAuth) {
+        // creates a new user in DBB if new or returns the old one if exists
+        const userRef = await createUserProfileDocument(userAuth); // saves 'new logged in user' to the DBB
+
+        userRef.onSnapshot(snapShot => {
+          // read the DBB, updates the front-end
+          this.setState({
+            currentUser: {
+              id: snapShot.id,
+              ...snapShot.data() // Name, CreatedAT, email
+            }
+          });
+          console.log(this.state);
+        });
+      } else {
+        this.setState({ currentUser: userAuth });
+      }
+    });
   }
 
   componentWillUnmount() {
