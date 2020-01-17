@@ -32,7 +32,6 @@ class App extends React.Component {
               ...snapShot.data() // Name, CreatedAT, email
             }
           });
-          console.log(this.state);
         });
       } else {
         this.setState({ currentUser: userAuth });
